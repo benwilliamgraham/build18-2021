@@ -71,22 +71,28 @@ static int patestCallback(const void *inputBuffer, void *outputBuffer,
 
     // Get values from image
     Scalar b = img.at<u_int8_t>(Point(xPos, yPos));
+    //std::cout << b << " " << xPos << " " << yPos << std::endl;
     if (b[0] < 200) {
       continue;
     }
 
     // Normalize values
-    data->left_phase = 2.0 * (float)xPos / (float)WIDTH - 1;
-    data->right_phase = 2.0 * (float)yPos / (float)HEIGHT - 1;
+    data->left_phase = 2.0 * (float)xPos / (float)(WIDTH/zoomLvl) - 1;
+    data->right_phase = 2.0 * (float)yPos / (float)(HEIGHT/zoomLvl) - 1;
   }
 
   return 0;
 }
 
 static paTestData data;
-int main(void) {
+int main(int argc, char *argv[]) {
+  int opt;
   struct termios old_tio, new_tio;
   unsigned char c;
+  bool pong_flag = false;
+  bool doom_flag = false;
+  bool help_flag = false;
+  std::string image_path;
 
   tcgetattr(STDIN_FILENO, &old_tio);
 
@@ -96,8 +102,26 @@ int main(void) {
 
   tcsetattr(STDIN_FILENO, TCSANOW, &new_tio);
 
+  while ((opt = getopt(argc, argv, "hi:pd")) != -1) {
+    switch(opt) {
+      case 'i':
+        image_path = optarg;
+        break;
+      case 'p':
+        pong_flag = true;
+        break;
+      case 'd':
+        doom_flag = true;
+        break;
+      case 'h':
+      default:
+        help_flag = true;
+        break;
+    }
+  }
+
   // open image
-  std::string image_path = "test.png";
+  //std::string image_path = "test.png";
   img = imread(image_path, IMREAD_GRAYSCALE);
 
   // connect to stream
