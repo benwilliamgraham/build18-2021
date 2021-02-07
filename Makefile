@@ -1,6 +1,6 @@
 CC = clang++
 CFLAGS = -Wall -Wextra -O3
-INC = -I/usr/include/opencv4
+INC = -I/usr/include/opencv2
 LIBS = -lportaudio -lopencv_core -lopencv_imgcodecs
 SDIR = src
 BDIR = bld
