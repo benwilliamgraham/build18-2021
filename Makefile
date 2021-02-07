@@ -1,5 +1,5 @@
 CC = clang++
-CFLAGS = -Wall -Wextra -O3
+CFLAGS = -Wall -Wextra -Og -g
 INC = -I/usr/include/opencv2
 LIBS = -lportaudio -lopencv_core -lopencv_imgcodecs
 SDIR = src
@@ -17,7 +17,7 @@ $(TARGET): $(BDIR)/$(TARGET)
 
 $(ODIR)/%.o: $(SDIR)/%.cpp
 	mkdir -p $(ODIR)
-	$(CC) -c -o $@ $< $(INC) $(CFLAGS) $(LIBS)
+	$(CC) -c -o $@ $< $(INC) $(CFLAGS)
 
 $(BDIR)/$(TARGET): $(OBJS)
 	mkdir -p bld/
