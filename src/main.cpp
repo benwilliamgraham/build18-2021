@@ -29,6 +29,7 @@ Mat img;
 unsigned xPos = 0;
 unsigned yPos = 0;
 int xDir = 1;
+unsigned zoomLvl = 1;
 
 static int patestCallback(const void *inputBuffer, void *outputBuffer,
                           unsigned long framesPerBuffer,
@@ -47,7 +48,7 @@ static int patestCallback(const void *inputBuffer, void *outputBuffer,
     if (xDir) {
       xPos++;
       // If x reaches end of the line, swap direction and increment y
-      if (xPos >= WIDTH) {
+      if (xPos >= WIDTH/zoomLvl) {
         xDir = 0;
         yPos++;
       }
@@ -61,7 +62,7 @@ static int patestCallback(const void *inputBuffer, void *outputBuffer,
     }
 
     // If finished drawing image, go back to beginning
-    if (yPos >= HEIGHT) {
+    if (yPos >= HEIGHT/zoomLvl) {
       yPos = 0;
     }
 
@@ -151,6 +152,25 @@ int main(int argc, char *argv[]) {
   while(1) {
     char c;
     c = getchar();
+    switch (c) {
+      case 'q':
+        goto done;
+        break;
+      case 'i':
+        zoomLvl++;
+        break;
+      case 'o':
+        zoomLvl--;
+        break;
+      case 'w':
+        break;
+      case 'a':
+        break;
+      case 's':
+        break;
+      case 'd':
+        break;
+    }
     if (c == 'q') {
       goto done;
     }
