@@ -1,11 +1,13 @@
+#include <iostream>
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgcodecs.hpp>
 #include <portaudio.h>
 #include <stdio.h>
-#include <iostream>
 #include <stdlib.h>
-#include <opencv2/core.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/highgui.hpp>
 #include <sys/types.h>
+#include <termios.h>
+#include <unistd.h>
 
 #define SAMPLE_RATE (120000)
 #define WIDTH (80)
@@ -23,7 +25,10 @@ typedef struct {
 using namespace cv;
 
 Mat img;
-int x = 0, xd = 1, y = 0;
+
+unsigned xPos = 0;
+unsigned yPos = 0;
+int xDir = 1;
 
 static int patestCallback(const void *inputBuffer, void *outputBuffer,
                           unsigned long framesPerBuffer,
@@ -35,45 +40,65 @@ static int patestCallback(const void *inputBuffer, void *outputBuffer,
   unsigned int i;
   (void)inputBuffer; /* Prevent unused variable warning. */
 
+  // Loop through frames asked for by port audio
   for (i = 0; i < framesPerBuffer; i++) {
-    // find next dark pixel
-    if (xd) {
-      x += 1;
-      if (x >= WIDTH) {
-        xd = 0;
-        y += 1;
+
+    // Find next dark pixel
+    if (xDir) {
+      xPos++;
+      // If x reaches end of the line, swap direction and increment y
+      if (xPos >= WIDTH) {
+        xDir = 0;
+        yPos++;
       }
     } else {
-      x -= 1;
-      if (x <= 0) {
-        xd = 1;
-        y += 1;
+      xPos--;
+      // If x has wrapped around, swap directions and increment y
+      if (xPos == 0) {
+        xDir = 1;
+        yPos++;
       }
     }
-    if (y >= HEIGHT) {
-      y = 0;
+
+    // If finished drawing image, go back to beginning
+    if (yPos >= HEIGHT) {
+      yPos = 0;
     }
 
+    // Output values
     *out++ = data->left_phase;  /* left */
     *out++ = data->right_phase; /* right */
 
-    Scalar b = img.at<u_int8_t>(Point(x, y));
+    // Get values from image
+    Scalar b = img.at<u_int8_t>(Point(xPos, yPos));
     if (b[0] < 200) {
       continue;
     }
 
-    data->left_phase = 2.0 * (float)x / (float)WIDTH - 1;
-    data->right_phase = 2.0 * (float)y / (float)HEIGHT - 1;
+    // Normalize values
+    data->left_phase = 2.0 * (float)xPos / (float)WIDTH - 1;
+    data->right_phase = 2.0 * (float)yPos / (float)HEIGHT - 1;
   }
+
   return 0;
 }
 
 static paTestData data;
-int main() {
-  // open image
-  std::string image_path = samples::findFile("test.png");
-  img = imread(image_path, IMREAD_GRAYSCALE);
+int main(void) {
+  struct termios old_tio, new_tio;
+  unsigned char c;
 
+  tcgetattr(STDIN_FILENO, &old_tio);
+
+  new_tio = old_tio;
+
+  new_tio.c_lflag &=(~ICANON & ~ECHO);
+
+  tcsetattr(STDIN_FILENO, TCSANOW, &new_tio);
+
+  // open image
+  std::string image_path = "test.png";
+  img = imread(image_path, IMREAD_GRAYSCALE);
 
   // connect to stream
   PaStream *stream;
@@ -83,23 +108,31 @@ int main() {
 
   if (Pa_Initialize() != paNoError) {
     fprintf(stderr, "Cannot initialize pulse audio\n");
-    exit(EXIT_FAILURE);
+    goto done;
   }
 
   if (Pa_OpenDefaultStream(&stream, 0, 2, paFloat32, SAMPLE_RATE, 256,
                            patestCallback, &data) != paNoError) {
     fprintf(stderr, "Cannot open stream\n");
     Pa_Terminate();
-    exit(EXIT_FAILURE);
+    goto done;
   }
 
   if (Pa_StartStream(stream) != paNoError) {
     fprintf(stderr, "Cannot start stream\n");
     Pa_Terminate();
-    exit(EXIT_FAILURE);
+    goto done;
   }
 
-  Pa_Sleep(10000);
+  while(1) {
+    char c;
+    c = getchar();
+    if (c == 'q') {
+      goto done;
+    }
+  }
 
+done:
+  tcsetattr(STDIN_FILENO, TCSANOW, &old_tio);
   Pa_Terminate();
 }
