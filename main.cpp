@@ -1,8 +1,15 @@
 #include <portaudio.h>
 #include <stdio.h>
+#include <iostream>
 #include <stdlib.h>
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
+#include <sys/types.h>
 
-#define SAMPLE_RATE (44100)
+#define SAMPLE_RATE (120000)
+#define WIDTH (80)
+#define HEIGHT (80)
 
 typedef struct {
   float left_phase;
@@ -13,7 +20,10 @@ typedef struct {
  * that could mess up the system like calling malloc() or free().
  */
 
-int dir = 0;
+using namespace cv;
+
+Mat img;
+int x = 0, xd = 1, y = 0;
 
 static int patestCallback(const void *inputBuffer, void *outputBuffer,
                           unsigned long framesPerBuffer,
@@ -26,32 +36,46 @@ static int patestCallback(const void *inputBuffer, void *outputBuffer,
   (void)inputBuffer; /* Prevent unused variable warning. */
 
   for (i = 0; i < framesPerBuffer; i++) {
+    // find next dark pixel
+    if (xd) {
+      x += 1;
+      if (x >= WIDTH) {
+        xd = 0;
+        y += 1;
+      }
+    } else {
+      x -= 1;
+      if (x <= 0) {
+        xd = 1;
+        y += 1;
+      }
+    }
+    if (y >= HEIGHT) {
+      y = 0;
+    }
+
     *out++ = data->left_phase;  /* left */
     *out++ = data->right_phase; /* right */
-    switch (i % 4) {
-    case 0:
-      data->left_phase = -1;
-      data->right_phase = -1;
-      break;
-    case 1:
-      data->left_phase = -1;
-      data->right_phase = 1;
-      break;
-    case 2:
-      data->left_phase = 1;
-      data->right_phase = 1;
-      break;
-    case 3:
-      data->left_phase = 1;
-      data->right_phase = -1;
-      break;
+
+    Scalar b = img.at<u_int8_t>(Point(x, y));
+    if (b[0] < 200) {
+      continue;
     }
+
+    data->left_phase = 2.0 * (float)x / (float)WIDTH - 1;
+    data->right_phase = 2.0 * (float)y / (float)WIDTH - 1;
   }
   return 0;
 }
 
 static paTestData data;
 int main() {
+  // open image
+  std::string image_path = samples::findFile("test.png");
+  img = imread(image_path, IMREAD_GRAYSCALE);
+
+
+  // connect to stream
   PaStream *stream;
   PaError err;
 

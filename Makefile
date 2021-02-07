@@ -1,2 +1,2 @@
-build18: build18.c
-	gcc -O3 -lportaudio -o build18 build18.c
+build18: main.cpp
+	clang++ -O3 -lopencv_core -lopencv_imgcodecs -lportaudio -I/usr/include/opencv4 -o build18 main.cpp
