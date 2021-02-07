@@ -63,7 +63,7 @@ static int patestCallback(const void *inputBuffer, void *outputBuffer,
     }
 
     data->left_phase = 2.0 * (float)x / (float)WIDTH - 1;
-    data->right_phase = 2.0 * (float)y / (float)WIDTH - 1;
+    data->right_phase = 2.0 * (float)y / (float)HEIGHT - 1;
   }
   return 0;
 }
