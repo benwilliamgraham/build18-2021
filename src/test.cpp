@@ -11,14 +11,14 @@ int main() {
   float angle = 0;
   for (int i = 0;;i++) {
     std::vector<Shape> shapes{
-        Shape::Line(Point(200 + sin(angle) * 100, 200 + cos(angle) * 100),
-                    Point(200 - sin(angle) * 100, 200 - cos(angle) * 100), 8),
-        Shape::Line(Point(200 + sin(angle + 0.5) * 100, 200 + cos(angle + 0.5) * 100),
-                    Point(200 - sin(angle + 0.5) * 100, 200 - cos(angle + 0.5) * 100), 8)};
+      Shape::Rectangle(Point(100, 100), Point(200, 200), 8, 8)
+      // Shape::Line(Point(0, 0), Point(200, 200), 8),
+        // Shape::Line(Point(30, 30), Point(150, 150), 8)
+    };
     angle += 0.0001;
 
     renderer.draw(shapes);
 
-    usleep(10);
+    sleep(1000);
   }
 }
