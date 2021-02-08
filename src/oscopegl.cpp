@@ -16,7 +16,7 @@ float Renderer::next_coord_() {
 }
 
 Renderer *Renderer::instance() {
-  static Renderer renderer(9600);
+  static Renderer renderer;
   return &renderer;
 }
 
@@ -32,7 +32,7 @@ int callback_(const void *_in, void *void_out, unsigned long num_frames,
   return 0;
 }
 
-Renderer::Renderer(unsigned sample_rate) {
+void Renderer::start(unsigned sample_rate) {
   PaStream *stream;
 
   Pa_Initialize();

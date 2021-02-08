@@ -5,8 +5,11 @@
 
 using namespace oscopegl;
 
+#define SAMPLE_RATE 9600
+
 int main() {
   Renderer *R = Renderer::instance();
+  R->start(SAMPLE_RATE);
 
   for (int i = 0;; i++) {
     R->buffer_polygon(

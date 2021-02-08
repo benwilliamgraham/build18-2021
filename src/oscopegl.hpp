@@ -9,7 +9,6 @@ namespace oscopegl {
 
 enum Color { NONE, LIGHT, DARK };
 
-
 class Point {
 public:
   float x, y;
@@ -25,7 +24,9 @@ public:
   static Renderer *instance();
 
   // Constructor
-  Renderer(unsigned sample_rate);
+  Renderer() = default;
+  // Start playing the audio signal
+  void start(unsigned sample_rate);
   // Add a point to the buffer
   void buffer_point(Point p, const Color fill, bool persist = false);
   // Add a line to the buffer
@@ -45,7 +46,6 @@ public:
   float next_coord_();
 
 private:
-
   const float light_draw_len = 0.08;
   const float dark_draw_len = light_draw_len / 2;
   std::vector<float> buffer_points;
