@@ -5,8 +5,8 @@
 
 namespace oscopegl {
 
-const float light_draw_len = 0.1;
-const float dark_draw_len = light_draw_len / 4;
+const float light_draw_len = 0.08;
+const float dark_draw_len = light_draw_len / 2;
 
 std::vector<float> buffer_points;
 std::vector<float> draw_points;
@@ -42,6 +42,13 @@ Renderer::Renderer(unsigned sample_rate) {
   Pa_StartStream(stream);
 }
 
+void buffer_point(Point p, Color fill) {
+  for (int i = 0; i < (fill == LIGHT ? 2 : 4); i++) {
+    buffer_points.push_back(p.x);
+    buffer_points.push_back(p.y);
+  }
+}
+
 void Renderer::buffer_line(Point a, Point b, Color fill) {
   float draw_len = fill == LIGHT ? light_draw_len : dark_draw_len;
   float x = a.x, y = a.y;
@@ -50,7 +57,7 @@ void Renderer::buffer_line(Point a, Point b, Color fill) {
     buffer_points.push_back(y);
     float x_dist = b.x - x, y_dist = b.y - y;
     float dist = sqrt(x_dist * x_dist + y_dist * y_dist);
-    if (dist < draw_len) {
+    if (dist <= draw_len) {
       break;
     }
     x += draw_len * x_dist / dist;
@@ -60,38 +67,51 @@ void Renderer::buffer_line(Point a, Point b, Color fill) {
   buffer_points.push_back(b.y);
 }
 
-void Renderer::buffer_triangle(Point a, Point b, Point c, Color border,
-                               Color fill) {}
+void Renderer::buffer_polygon(std::vector<Point> points, Color border,
+                              Color fill) {
+  float draw_len = fill == LIGHT ? light_draw_len : dark_draw_len;
+
+  // draw outline and calculate center
+  Point center(0, 0);
+  for (int i = 0; i < points.size(); i++) {
+    buffer_line(points[i], points[(i + 1) % points.size()], border);
+    center.x += points[i].x;
+    center.y += points[i].y;
+  }
+  center.x /= points.size();
+  center.y /= points.size();
+
+  // spiral inwards until center is reached
+  while (fill != NONE) {
+    // shift points towards center
+    for (int i = 0; i < points.size(); i++) {
+      Point p = points[i];
+      float x_dist = center.x - p.x, y_dist = center.y - p.y;
+      float dist = sqrt(x_dist * x_dist + y_dist * y_dist);
+      if (dist <= draw_len) {
+        goto done;
+      }
+      p.x += draw_len * x_dist / dist;
+      p.y += draw_len * y_dist / dist;
+      points[i] = p;
+    }
+
+    // draw spiral
+    for (int i = 0; i < points.size(); i++) {
+      buffer_line(points[i], points[(i + 1) % points.size()], fill);
+    }
+  }
+done:;
+}
 
 void Renderer::buffer_rectangle(Point location, Point size, Color border,
                                 Color fill) {
-  float x = location.x, y = location.y, w = size.x, h = size.y;
-  buffer_line(Point(x, y),
-              Point(x + w, y), border);
-  buffer_line(Point(x + w, y),
-              Point(x + w, y + h), border);
-  buffer_line(Point(x + w, y + h),
-              Point(x, y + h), border);
-  buffer_line(Point(x, y + h),
-              Point(x, y), border);
-  while (w > 0.04 && h > 0.04) {
-      x += 0.02;
-      y += 0.02;
-      w -= 0.04;
-      h -= 0.04;
-  buffer_line(Point(x, y),
-              Point(x + w, y), fill);
-  buffer_line(Point(x + w, y),
-              Point(x + w, y + h), fill);
-  buffer_line(Point(x + w, y + h),
-              Point(x, y + h), fill);
-  buffer_line(Point(x, y + h),
-              Point(x, y), fill);
-  }
+  buffer_polygon({Point(location.x, location.y),
+                  Point(location.x + size.x, location.y),
+                  Point(location.x + size.x, location.y + size.y),
+                  Point(location.x, location.y + size.y)},
+                 border, fill);
 }
-
-void Renderer::buffer_polygon(std::vector<Point> points, Color border,
-                              Color fill) {}
 
 void Renderer::buffer_text(std::string value, Point location, Point size,
                            Color fill) {}
