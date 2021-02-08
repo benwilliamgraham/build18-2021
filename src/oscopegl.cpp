@@ -1,102 +1,105 @@
 #include "oscopegl.hpp"
 #include <iostream>
+#include <math.h>
 #include <portaudio.h>
-
-typedef struct {
-  float left_phase;
-  float right_phase;
-} paData;
 
 namespace oscopegl {
 
-Shape Shape::Line(Point a, Point b, unsigned fill) {
-  Shape shape;
-  for (int i = 0; i < fill; i++) {
-    shape.points.push_back(a);
-    shape.points.push_back(b);
+const float light_draw_len = 0.1;
+const float dark_draw_len = light_draw_len / 4;
+
+std::vector<float> buffer_points;
+std::vector<float> draw_points;
+std::vector<float>::iterator draw_itr;
+
+float next_coord_() {
+  if (draw_points.empty()) {
+    return 0;
   }
-  return shape;
+  if (draw_itr == draw_points.end()) {
+    draw_itr = draw_points.begin();
+  }
+  return *draw_itr++;
 }
 
-Shape Shape::Rectangle(Point location, Point size, unsigned int border, unsigned int fill) {
-  Shape shape;
-  int x, y, w, h;
-  std::tie(x, y) = location;
-  std::tie(w, h) = size;
-  for (int i = 0; i < border; i++) {
-    shape.points.push_back(Point(x, y));
-    shape.points.push_back(Point(x, y + h));
-    shape.points.push_back(Point(x + w, y + h));
-    shape.points.push_back(Point(x + w, y));
-  }
-  for (int i = 0; i < fill; i++) {
-    for (;w > 8 && h > 8;) {
-      x += 8;
-      y += 8;
-      w -= 16;
-      h -= 16;
-      shape.points.push_back(Point(x, y));
-      shape.points.push_back(Point(x, y + h));
-      shape.points.push_back(Point(x + w, y + h));
-      shape.points.push_back(Point(x + w, y));
-    }
-  }
-  return shape;
-}
-
-int screen_width, screen_height;
-
-std::vector<Point> to_render;
-std::vector<Point>::iterator it;
-
-static int paCallback(const void *_in, void *void_out,
-                      unsigned long frames_per_buffer,
-                      const PaStreamCallbackTimeInfo *time_info,
-                      PaStreamCallbackFlags _flags, void *void_data) {
-  paData *data = (paData *)void_data;
+int callback_(const void *_in, void *void_out, unsigned long num_frames,
+              const PaStreamCallbackTimeInfo *_time,
+              PaStreamCallbackFlags _flags, void *_data) {
   float *out = (float *)void_out;
-
-  for (unsigned long i = 0; i < frames_per_buffer; i++) {
-    int x, y;
-    *out++ = data->left_phase;
-    *out++ = data->right_phase;
-    if (to_render.size() == 0) {
-     continue; 
-    }
-    if (it == to_render.end()) {
-      it = to_render.begin();
-      }
-    std::tie(x, y) = *it;
-    if (rand() % 16 == 0) {
-      ++it;
-    }
-    data->left_phase = 2.0 * (float)x / (float)screen_width - 1.0;
-    data->right_phase = 2.0 * (float)y / (float)screen_height - 1.0;
+  for (unsigned long i = 0; i < num_frames; i++) {
+    *out++ = next_coord_();
+    *out++ = next_coord_();
   }
   return 0;
 }
 
-static paData data;
-Renderer::Renderer(unsigned width, unsigned height, unsigned sample_rate) {
-  screen_width = width;
-  screen_height = height;
-
+Renderer::Renderer(unsigned sample_rate) {
   PaStream *stream;
 
-  data.left_phase = data.right_phase = 0.0;
-
   Pa_Initialize();
-  Pa_OpenDefaultStream(&stream, 0, 2, paFloat32, sample_rate, paFramesPerBufferUnspecified, paCallback,
-                       &data);
+  Pa_OpenDefaultStream(&stream, 0, 2, paFloat32, sample_rate,
+                       paFramesPerBufferUnspecified, callback_, NULL);
   Pa_StartStream(stream);
 }
 
-void Renderer::draw(std::vector<Shape> &shapes) {
-  to_render.clear();
-  for (Shape shape : shapes) {
-    to_render.insert(to_render.end(), shape.points.begin(), shape.points.end());
+void Renderer::buffer_line(Point a, Point b, Color fill) {
+  float draw_len = fill == LIGHT ? light_draw_len : dark_draw_len;
+  float x = a.x, y = a.y;
+  while (true) {
+    buffer_points.push_back(x);
+    buffer_points.push_back(y);
+    float x_dist = b.x - x, y_dist = b.y - y;
+    float dist = sqrt(x_dist * x_dist + y_dist * y_dist);
+    if (dist < draw_len) {
+      break;
+    }
+    x += draw_len * x_dist / dist;
+    y += draw_len * y_dist / dist;
   }
-  it = to_render.begin();
+  buffer_points.push_back(b.x);
+  buffer_points.push_back(b.y);
+}
+
+void Renderer::buffer_triangle(Point a, Point b, Point c, Color border,
+                               Color fill) {}
+
+void Renderer::buffer_rectangle(Point location, Point size, Color border,
+                                Color fill) {
+  float x = location.x, y = location.y, w = size.x, h = size.y;
+  buffer_line(Point(x, y),
+              Point(x + w, y), border);
+  buffer_line(Point(x + w, y),
+              Point(x + w, y + h), border);
+  buffer_line(Point(x + w, y + h),
+              Point(x, y + h), border);
+  buffer_line(Point(x, y + h),
+              Point(x, y), border);
+  while (w > 0.04 && h > 0.04) {
+      x += 0.02;
+      y += 0.02;
+      w -= 0.04;
+      h -= 0.04;
+  buffer_line(Point(x, y),
+              Point(x + w, y), fill);
+  buffer_line(Point(x + w, y),
+              Point(x + w, y + h), fill);
+  buffer_line(Point(x + w, y + h),
+              Point(x, y + h), fill);
+  buffer_line(Point(x, y + h),
+              Point(x, y), fill);
+  }
+}
+
+void Renderer::buffer_polygon(std::vector<Point> points, Color border,
+                              Color fill) {}
+
+void Renderer::buffer_text(std::string value, Point location, Point size,
+                           Color fill) {}
+
+void Renderer::swap_buffer() {
+  draw_points = buffer_points;
+  draw_itr = draw_points.begin();
+  buffer_points.clear();
 }
 
 } // namespace oscopegl

@@ -3,25 +3,24 @@
 #include <vector>
 
 namespace oscopegl {
-using Point = std::tuple<int, int>;
 
-class Shape {
+enum Color { NONE, LIGHT, DARK };
+
+class Point {
 public:
-  std::vector<Point> points;
-  static Shape Line(Point a, Point b, unsigned fill);
-  static Shape Triangle(Point a, Point b, Point c, unsigned border,
-                        unsigned fill);
-  static Shape Rectangle(Point location, Point size, unsigned border,
-                         unsigned fill);
-  static Shape Polygon(std::vector<Point> points, unsigned border,
-                       unsigned fill);
-  static Shape Text(std::string value, Point location, Point size,
-                    unsigned fill);
+  float x, y;
+  Point(float x, float y) : x(x), y(y) {}
 };
 
 class Renderer {
 public:
-  Renderer(unsigned width, unsigned height, unsigned sample_rate);
-  void draw(std::vector<Shape> &shapes);
+  Renderer(unsigned sample_rate);
+  void buffer_line(Point a, Point b, Color fill);
+  void buffer_triangle(Point a, Point b, Point c, Color border, Color fill);
+  void buffer_rectangle(Point location, Point size, Color border, Color fill);
+  void buffer_polygon(std::vector<Point> points, Color border, Color fill);
+  void buffer_text(std::string value, Point location, Point size, Color fill);
+  void swap_buffer();
 };
+
 } // namespace oscopegl

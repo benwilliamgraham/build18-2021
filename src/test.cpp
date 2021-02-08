@@ -6,19 +6,13 @@
 using namespace oscopegl;
 
 int main() {
-  Renderer renderer(400, 400, 44100);
+  Renderer renderer(96000);
 
-  float angle = 0;
-  for (int i = 0;;i++) {
-    std::vector<Shape> shapes{
-      Shape::Rectangle(Point(100, 100), Point(200, 200), 8, 8)
-      // Shape::Line(Point(0, 0), Point(200, 200), 8),
-        // Shape::Line(Point(30, 30), Point(150, 150), 8)
-    };
-    angle += 0.0001;
+  for (int i = 0;; i++) {
+    renderer.buffer_rectangle(Point(-0.5, -0.5), Point(1, 1), DARK, DARK);
 
-    renderer.draw(shapes);
+    renderer.swap_buffer();
 
-    sleep(1000);
+    sleep(100);
   }
 }
