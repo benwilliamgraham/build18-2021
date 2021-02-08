@@ -42,14 +42,14 @@ Renderer::Renderer(unsigned sample_rate) {
   Pa_StartStream(stream);
 }
 
-void buffer_point(Point p, Color fill) {
+void buffer_point(Point p, const Color fill) {
   for (int i = 0; i < (fill == LIGHT ? 2 : 4); i++) {
     buffer_points.push_back(p.x);
     buffer_points.push_back(p.y);
   }
 }
 
-void Renderer::buffer_line(Point a, Point b, Color fill) {
+void Renderer::buffer_line(Point a, Point b, const Color fill) {
   float draw_len = fill == LIGHT ? light_draw_len : dark_draw_len;
   float x = a.x, y = a.y;
   while (true) {
@@ -67,8 +67,8 @@ void Renderer::buffer_line(Point a, Point b, Color fill) {
   buffer_points.push_back(b.y);
 }
 
-void Renderer::buffer_polygon(std::vector<Point> points, Color border,
-                              Color fill) {
+void Renderer::buffer_polygon(std::vector<Point> points, const Color border,
+                              const Color fill) {
   float draw_len = fill == LIGHT ? light_draw_len : dark_draw_len;
 
   // draw outline and calculate center
@@ -104,8 +104,8 @@ void Renderer::buffer_polygon(std::vector<Point> points, Color border,
 done:;
 }
 
-void Renderer::buffer_rectangle(Point location, Point size, Color border,
-                                Color fill) {
+void Renderer::buffer_rectangle(Point location, Point size, const Color border,
+                                const Color fill) {
   buffer_polygon({Point(location.x, location.y),
                   Point(location.x + size.x, location.y),
                   Point(location.x + size.x, location.y + size.y),
@@ -114,7 +114,7 @@ void Renderer::buffer_rectangle(Point location, Point size, Color border,
 }
 
 void Renderer::buffer_text(std::string value, Point location, Point size,
-                           Color fill) {}
+                           const Color fill) {}
 
 void Renderer::swap_buffer() {
   draw_points = buffer_points;
