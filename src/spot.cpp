@@ -25,7 +25,7 @@ void transform_(Point3d *v, float ys, float yc, float ps, float pc) {
 int main() {
   Renderer renderer(96000);
 
-  FILE *fp = fopen("spot.obj", "r");
+  FILE *fp = fopen("low-poly-teapot.obj", "r");
   std::vector<Point3d> vertices;
   Point3d vertex(0, 0, 0);
   float max = 0;
@@ -58,7 +58,7 @@ int main() {
           pitch_cos = cos(pitch);
 
     // loop through faces
-    for (int i = 0; i < faces.size(); i += 20) {
+    for (int i = 0; i < faces.size(); i += 1) {
       Face face = faces[i];
       Point3d a = face.a, b = face.b, c = face.c;
       transform_(&a, yaw_sin, yaw_cos, pitch_sin, pitch_cos);
@@ -71,6 +71,6 @@ int main() {
 
     renderer.swap_buffer();
 
-    usleep(10000);
+    usleep(20000);
   }
 }
