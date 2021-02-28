@@ -23,7 +23,7 @@ int main() {
   pixel_arr[49][50] = 1;
 
   for (int n = 0;; n++) {
-
+    R->clear();
 
     for(int i = 0; i < DIM; i++ )
     {
