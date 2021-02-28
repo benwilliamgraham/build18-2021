@@ -32,29 +32,29 @@ int main() {
 
       int sum = 0;
 
-      if (0 <= i-1 && i-1 < 5){
+      if (0 <= i-1 && i-1 < DIM){
         sum += pixel_arr[i-1][j];
       }
-      if (0 <= i+1 && i+1 < 5){
+      if (0 <= i+1 && i+1 < DIM){
         sum += pixel_arr[i+1][j];
       }
-      if (0 <= j-1 && j-1 < 5){
+      if (0 <= j-1 && j-1 < DIM){
         sum += pixel_arr[i][j-1];
       }
-      if (0 <= j+1 && j+1 < 5){
+      if (0 <= j+1 && j+1 < DIM){
         sum += pixel_arr[i][j+1];
       }
 
-      if (0 <= i-1 && i-1 < 5 && 0 <= j-1 && j-1 < 5){
+      if (0 <= i-1 && i-1 < DIM && 0 <= j-1 && j-1 < DIM){
         sum += pixel_arr[i-1][j-1];
       }
-      if (0 <= i+1 && i+1 < 5 && 0 <= j-1 && j-1 < 5){
+      if (0 <= i+1 && i+1 < DIM && 0 <= j-1 && j-1 < DIM){
         sum += pixel_arr[i+1][j-1];
       }
-      if (0 <= i-1 && i-1 < 5 && 0 <= j+1 && j+1 < 5){
+      if (0 <= i-1 && i-1 < DIM && 0 <= j+1 && j+1 < DIM){
         sum += pixel_arr[i-1][j+1];
       }
-      if (0 <= i+1 && i+1 < 5 && 0 <= j+1 && j+1 < 5){
+      if (0 <= i+1 && i+1 < DIM && 0 <= j+1 && j+1 < DIM){
         sum += pixel_arr[i+1][j+1];
       }
 
